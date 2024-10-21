@@ -1,0 +1,148 @@
+{
+    "name": "prospect_to_customer_workflow",
+    "description": "Workflow for managing prospect to customer lifecycle",
+    "version": 1,
+    "tasks": [
+      {
+        "name": "add_prospect",
+        "taskReferenceName": "addProspect",
+        "type": "SIMPLE",
+        "inputParameters": {
+          "prospectDetails": "${workflow.input.prospectDetails}"
+        }
+      },
+      {
+        "name": "update_prospect",
+        "taskReferenceName": "updateProspect",
+        "type": "SIMPLE",
+        "inputParameters": {
+          "prospectDetails": "${workflow.input.prospectDetails}"
+        }
+      },
+      {
+        "name": "decision_task",
+        "taskReferenceName": "decisionTask",
+        "type": "DECISION",
+        "inputParameters": {},
+        "caseValueParam": "prospectOutcome",
+        "decisionCases": {
+          "ADD_LEAD": [
+            {
+              "name": "schedule_followup",
+              "taskReferenceName": "scheduleFollowup",
+              "type": "SIMPLE",
+              "inputParameters": {
+                "leadId": "${workflow.input.leadId}"
+              }
+            },
+            {
+              "name": "send_followup_reminder",
+              "taskReferenceName": "sendFollowupReminder",
+              "type": "SIMPLE",
+              "inputParameters": {
+                "emailDetails": "${workflow.input.emailDetails}"
+              }
+            },
+            {
+              "name": "schedule_demo",
+              "taskReferenceName": "scheduleDemo",
+              "type": "SIMPLE",
+              "inputParameters": {
+                "demoDetails": "${workflow.input.demoDetails}"
+              }
+            },
+            {
+              "name": "wait_task",
+              "taskReferenceName": "waitFor5Days",
+              "type": "WAIT",
+              "inputParameters": {
+                "duration": "5d" 
+              }
+            },
+            {
+              "name": "send_email_after_demo",
+              "taskReferenceName": "sendEmailAfterDemo",
+              "type": "SIMPLE",
+              "inputParameters": {
+                "emailDetails": "${workflow.input.emailDetails}"
+              }
+            },
+            {
+              "name": "schedule_negotiation",
+              "taskReferenceName": "scheduleNegotiation",
+              "type": "SIMPLE",
+              "inputParameters": {
+                "negotiationDetails": "${workflow.input.negotiationDetails}"
+              }
+            },
+            {
+              "name": "wait_task",
+              "taskReferenceName": "waitFor60Days",
+              "type": "WAIT",
+              "inputParameters": {
+                "duration": "60d" 
+              }
+            },
+            {
+              "name": "do_while_followup",
+              "taskReferenceName": "followupLoop",
+              "type": "DO_WHILE",
+              "loopCondition": "if ( $.followupCount < 3 ) { true; } else { false; }",
+              "loopOver": [
+                {
+                  "name": "schedule_followup",
+                  "taskReferenceName": "loopScheduleFollowup",
+                  "type": "SIMPLE",
+                  "inputParameters": {
+                    "leadId": "${workflow.input.leadId}"
+                  }
+                },
+                {
+                  "name": "send_followup_reminder",
+                  "taskReferenceName": "loopSendFollowupReminder",
+                  "type": "SIMPLE",
+                  "inputParameters": {
+                    "emailDetails": "${workflow.input.emailDetails}"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "convert_to_customer",
+              "taskReferenceName": "convertToCustomer",
+              "type": "SIMPLE",
+              "inputParameters": {
+                "customerDetails": "${workflow.input.customerDetails}"
+              }
+            }
+          ],
+          "DELETE_PROSPECT": [
+            {
+              "name": "delete_prospect",
+              "taskReferenceName": "deleteProspect",
+              "type": "SIMPLE",
+              "inputParameters": {
+                "prospectId": "${workflow.input.prospectId}"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "inputParameters": [
+      "prospectDetails",
+      "leadId",
+      "emailDetails",
+      "demoDetails",
+      "negotiationDetails",
+      "customerDetails",
+      "prospectOutcome",
+      "prospectId"
+    ],
+    "outputParameters": {
+      "result": "Workflow completed"
+    },
+    "schemaVersion": 2,
+    "ownerEmail": "example@email.com"
+  }
+  
